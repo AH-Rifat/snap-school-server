@@ -38,12 +38,21 @@ async function run() {
       res.send(result);
     });
 
-    // get a single user
+    // get a Admin user
     app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const user = await users.findOne(filter);
       const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
+
+    //get a Instructor user
+    app.get("/user/instructor/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await users.findOne(filter);
+      const result = { instructor: user?.role === "instructor" };
       res.send(result);
     });
 
