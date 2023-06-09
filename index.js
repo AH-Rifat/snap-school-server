@@ -30,10 +30,31 @@ async function run() {
 
     const database = client.db("snapSchoolDB");
     const users = database.collection("users");
+
     // Create User By Role
     app.post("/user", async (req, res) => {
       const body = req.body;
       const result = await users.insertOne(body);
+      res.send(result);
+    });
+
+    // get all users
+    app.get("/allUsers", async (req, res) => {
+      const result = await users.find().toArray();
+      res.send(result);
+    });
+
+    // set user role
+    app.patch("/setUserRole/:email", async (req, res) => {
+      const email = req.params.email;
+      const role = req.body.role;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          role: role,
+        },
+      };
+      const result = await users.updateOne(filter, updateDoc);
       res.send(result);
     });
 
