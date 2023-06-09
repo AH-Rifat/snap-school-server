@@ -38,6 +38,15 @@ async function run() {
       res.send(result);
     });
 
+    // get a single user
+    app.get("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await users.findOne(filter);
+      const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
+
     // get all users
     app.get("/allUsers", async (req, res) => {
       const result = await users.find().toArray();
