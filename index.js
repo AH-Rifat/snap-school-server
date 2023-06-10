@@ -30,6 +30,7 @@ async function run() {
 
     const database = client.db("snapSchoolDB");
     const users = database.collection("users");
+    const classes = database.collection("classes");
 
     // Create User By Role
     app.post("/user", async (req, res) => {
@@ -73,6 +74,14 @@ async function run() {
         },
       };
       const result = await users.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // All Instructor routes are here...
+    // create add classes for students
+    app.post("/addClass", async (req, res) => {
+      const classesData = req.body;
+      const result = await classes.insertOne(classesData);
       res.send(result);
     });
 
