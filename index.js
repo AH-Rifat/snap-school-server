@@ -91,6 +91,17 @@ async function run() {
       res.send(result);
     });
 
+    // send  feedback from admin to instructor
+    app.post("/admin/feedback", async (req, res) => {
+      const feedback = req.body.feedback;
+      const classId = req.body.classId;
+      console.log(typeof classId);
+      const filter = { _id: new ObjectId(classId) };
+      const update = { $set: { feedback: feedback } };
+      const result = await classes.updateOne(filter, update);
+      res.send(result);
+    });
+
     // All Instructor routes are here...
     // create add classes for students
     app.post("/addClass", async (req, res) => {
