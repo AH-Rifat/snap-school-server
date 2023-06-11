@@ -123,6 +123,13 @@ async function run() {
       res.send(result);
     })
 
+    //get classes data when admin approved
+    app.get("/approveClasses", async(req,res)=>{
+      const filter = {status:'approve'}
+      const result = await classes.find(filter).toArray();
+      res.send(result);
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
