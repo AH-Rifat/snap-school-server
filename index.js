@@ -31,6 +31,7 @@ async function run() {
     const database = client.db("snapSchoolDB");
     const users = database.collection("users");
     const classes = database.collection("classes");
+    const selectedClasses = database.collection("myClasses");
 
     // Create User By Role
     app.post("/user", async (req, res) => {
@@ -126,18 +127,34 @@ async function run() {
     });
 
     //get all instructor data
-    app.get("/allInstructors", async(req,res)=>{
-      const filter = {role:'instructor'}
+    app.get("/allInstructors", async (req, res) => {
+      const filter = { role: "instructor" };
       const result = await users.find(filter).toArray();
       res.send(result);
-    })
+    });
 
     //get classes data when admin approved
-    app.get("/approveClasses", async(req,res)=>{
-      const filter = {status:'approve'}
+    app.get("/approveClasses", async (req, res) => {
+      const filter = { status: "approve" };
       const result = await classes.find(filter).toArray();
       res.send(result);
-    })
+    });
+
+    // All Student routes here..
+    // set class by students
+    app.post("/myClasses", async (req, res) => {
+      const body = req.body;
+      const result = await selectedClasses.insertOne(body);
+      res.send(result);
+    });
+
+    // get all class data by students email
+    app.get("/myClasses/:email", async (req, res) => {
+      const stdEmail = req.params.email;
+      const filter = { studentEmail: stdEmail };
+      const result = await selectedClasses.find(filter).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
