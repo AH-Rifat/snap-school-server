@@ -57,6 +57,15 @@ async function run() {
       res.send(result);
     });
 
+    //get a Student user
+    app.get("/user/student/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await users.findOne(filter);
+      const result = { student: user?.role === "student" };
+      res.send(result);
+    });
+
     // get all users
     app.get("/allUsers", async (req, res) => {
       const result = await users.find().toArray();
