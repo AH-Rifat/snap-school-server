@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
@@ -32,6 +33,33 @@ async function run() {
     const users = database.collection("users");
     const classes = database.collection("classes");
     const selectedClasses = database.collection("myClasses");
+
+    // jwt route
+    app.post("/jwt", async (req, res) => {
+      const body = req.body;
+      const token = jwt.sign(body, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "35d",
+      });
+      res.send({ token });
+    });
+
+    //middleware function for verifying token
+    const verifyJWT = (req, res, next) => {
+      const authorization = req.headers.authorization;
+      if (!authorization) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' });
+      }
+      // bearer token
+      const token = authorization.split(' ')[1];
+
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ error: true, message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+      })
+    }
 
     // Create User By Role
     app.post("/user", async (req, res) => {
@@ -68,13 +96,13 @@ async function run() {
     });
 
     // get all users
-    app.get("/allUsers", async (req, res) => {
+    app.get("/allUsers", verifyJWT, async (req, res) => {
       const result = await users.find().toArray();
       res.send(result);
     });
 
     // set user role
-    app.patch("/setUserRole/:email", async (req, res) => {
+    app.patch("/setUserRole/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const role = req.body.role;
       const filter = { email: email };
@@ -88,7 +116,7 @@ async function run() {
     });
 
     // set classes status - approve/deny
-    app.patch("/classesStatus/:id", async (req, res) => {
+    app.patch("/classesStatus/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const status = req.query.status;
       const query = { _id: new ObjectId(id) };
@@ -102,10 +130,9 @@ async function run() {
     });
 
     // send  feedback from admin to instructor
-    app.post("/admin/feedback", async (req, res) => {
+    app.post("/admin/feedback", verifyJWT, async (req, res) => {
       const feedback = req.body.feedback;
       const classId = req.body.classId;
-      console.log(typeof classId);
       const filter = { _id: new ObjectId(classId) };
       const update = { $set: { feedback: feedback } };
       const result = await classes.updateOne(filter, update);
