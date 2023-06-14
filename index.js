@@ -3,6 +3,7 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
@@ -33,6 +34,7 @@ async function run() {
     const users = database.collection("users");
     const classes = database.collection("classes");
     const selectedClasses = database.collection("myClasses");
+    const paymentCollection = database.collection("payment");
 
     // jwt route
     app.post("/jwt", async (req, res) => {
@@ -153,6 +155,14 @@ async function run() {
       res.send(result);
     });
 
+    //get all my classes data
+    app.get("/classInfo/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const result = await classes.find(filter).toArray();
+      res.send(result);
+    });
+
     //get all instructor data
     app.get("/allInstructors", async (req, res) => {
       const filter = { role: "instructor" };
@@ -181,6 +191,50 @@ async function run() {
       const filter = { studentEmail: stdEmail };
       const result = await selectedClasses.find(filter).toArray();
       res.send(result);
+    });
+
+    //delete selected class
+    app.delete("/myClasses/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedClasses.deleteOne(query);
+      res.send(result);
+    });
+
+    // payment related api
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const classId = req.body.classId;
+      const currentSeats = req.body.currentSeats;
+      const currentEnrolledStudent = req.body.currentEnrolledStudent;
+      console.log(payment);
+      filter = { _id: new ObjectId(classId) }
+      const updateDoc = {
+        $set: {
+          availableSeats: currentSeats,
+          totalEnrolled: currentEnrolledStudent
+        },
+      }
+      const updateResult = await classes.updateOne(filter, updateDoc)
+      const insertedResult = await paymentCollection.insertOne(payment);
+      res.send({ updateResult, insertedResult });
+    });
+
+    // create payment intent
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ['card'],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
     // Send a ping to confirm a successful connection
