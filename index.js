@@ -104,7 +104,7 @@ async function run() {
     });
 
     // set user role
-    app.patch("/setUserRole/:email", verifyJWT, async (req, res) => {
+    app.patch("/setUserRole/:email", async (req, res) => {
       const email = req.params.email;
       const role = req.body.role;
       const filter = { email: email };
@@ -155,6 +155,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/showClasses/:email", async (req, res) => {
+      const email = req.params.email
+      const filter = { instructorEmail: email }
+      const result = await classes.find(filter).toArray();
+      res.send(result);
+    });
+
     //get all my classes data
     app.get("/classInfo/:id", async (req, res) => {
       const id = req.params.id
@@ -190,6 +197,14 @@ async function run() {
       const stdEmail = req.params.email;
       const filter = { studentEmail: stdEmail };
       const result = await selectedClasses.find(filter).toArray();
+      res.send(result);
+    });
+
+    // get payment history by students email
+    app.get("/payment/:email", async (req, res) => {
+      const stdEmail = req.params.email;
+      const filter = { email: stdEmail };
+      const result = await paymentCollection.find(filter).toArray();
       res.send(result);
     });
 
